@@ -4,7 +4,7 @@ import { Text, View, StyleSheet } from "react-native";
 export default function Cabecalho(){
     return(
         <View style={styles.container}>
-            <Text style={styles.titulo}>VendaFácil</Text>
+            <Text style={styles.titulo}>Vende+</Text>
             <Text style={styles.subtitulo}>Gerenciamento de Vendas</Text>
         </View>
     );
