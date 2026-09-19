@@ -30,7 +30,4 @@ Tela única com:
 - Estilização com StyleSheet e uso inicial de Flexbox.
 
 ## Dificuldades encontradas durante o desenvolvimento
-- 
-
-##Capturas de tela
-- 
+- Até o momento, sem dificuldades. Utilizei o modelo de exemplo das aulas.
