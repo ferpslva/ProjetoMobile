@@ -31,6 +31,3 @@ Tela única com:
 
 ## Dificuldades encontradas durante o desenvolvimento
 - Até o momento, sem dificuldades. Utilizei o modelo de exemplo das aulas.
-
-## Uso da Inteligência Artificial
-- Auxílio com renderItem no App.tsx.
