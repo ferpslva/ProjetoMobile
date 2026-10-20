@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { formatarMoeda } from "../utils/formatadores";
 
 type CardVendaProps = {
     id: number,
@@ -6,18 +8,32 @@ type CardVendaProps = {
     produto: string,
     valor: number,
     status: string,
-    onDelete: (id: number) => void
+    data: string,
+    onDelete: (id: number) => Promise<void>,
+    onPress: (id: number) => void
 }
 
 export default function CardVenda({
-    id, cliente, produto, valor, status, onDelete
+    id, cliente, produto, valor, status, data, onDelete, onPress
 }: CardVendaProps){
+
+    // A exclusão agora é feita na API, então pede confirmação antes
+    const [confirmando, setConfirmando] = useState(false);
+    const [excluindo, setExcluindo] = useState(false);
+
+    async function excluir(){
+        setExcluindo(true);
+        await onDelete(id);
+        setExcluindo(false);
+        setConfirmando(false);
+    }
 
     return (
         <View style={styles.card}>
             <Text style={styles.produto}>{produto}</Text>
             <Text style={styles.cliente}>Cliente: {cliente}</Text>
-            <Text style={styles.valor}>R$ {valor.toFixed(2)}</Text>
+            <Text style={styles.cliente}>Venda #{id} • {data}</Text>
+            <Text style={styles.valor}>{formatarMoeda(valor)}</Text>
             <Text
                 style={[
                     styles.status,
@@ -25,10 +41,40 @@ export default function CardVenda({
                 ]}
             >{status}</Text>
 
-            <Pressable style={styles.botaoExcluir}
-            onPress={() => onDelete(id)}>
-                <Text style={styles.textoExcluir}>Excluir</Text>
-            </Pressable>
+            {confirmando ? (
+                <View>
+                    <Text style={styles.confirmacao}>
+                        Excluir esta venda? Essa ação não pode ser desfeita.
+                    </Text>
+                    <View style={styles.acoes}>
+                        <Pressable
+                            style={[styles.botaoAcao, excluindo && styles.desabilitado]}
+                            disabled={excluindo}
+                            onPress={excluir}>
+                            <Text style={styles.textoAcao}>
+                                {excluindo ? 'Excluindo...' : 'Sim, excluir'}
+                            </Text>
+                        </Pressable>
+                        <Pressable
+                            style={[styles.botaoAcao, excluindo && styles.desabilitado]}
+                            disabled={excluindo}
+                            onPress={() => setConfirmando(false)}>
+                            <Text style={styles.textoAcao}>Cancelar</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            ) : (
+                <View style={styles.acoes}>
+                    <Pressable style={styles.botaoAcao}
+                    onPress={() => onPress(id)}>
+                        <Text style={styles.textoAcao}>Detalhes</Text>
+                    </Pressable>
+                    <Pressable style={styles.botaoAcao}
+                    onPress={() => setConfirmando(true)}>
+                        <Text style={styles.textoAcao}>Excluir</Text>
+                    </Pressable>
+                </View>
+            )}
         </View>
     )
 }
@@ -68,15 +114,31 @@ const styles = StyleSheet.create({
       color: '#0a7d29',
     },
 
-    botaoExcluir: {
+    confirmacao: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginTop: 12,
+    },
+
+    acoes: {
+      flexDirection: 'row',
+      gap: 10,
+      marginTop: 12,
+    },
+
+    botaoAcao: {
+      flex: 1,
       borderWidth: 1,
       borderRadius: 6,
       padding: 8,
-      marginTop: 12,
       alignItems: 'center',
     },
 
-    textoExcluir: {
+    textoAcao: {
       fontWeight: 'bold',
+    },
+
+    desabilitado: {
+      opacity: 0.4,
     },
   });

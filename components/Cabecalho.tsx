@@ -12,8 +12,7 @@ export default function Cabecalho(){
 
 const styles = StyleSheet.create({
     container: {
-		flex: 1,
-		padding: 30,
+		paddingVertical: 20,
 		justifyContent: 'center',
 		alignItems: 'center'
 	},
@@ -24,7 +23,7 @@ const styles = StyleSheet.create({
 	},
 
 	subtitulo: {
-		fontSize: 20,
-		marginTop: 20,
+		fontSize: 18,
+		marginTop: 8,
 	},
 });
