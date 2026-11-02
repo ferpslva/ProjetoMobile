@@ -61,6 +61,42 @@ Tela única com:
 
 ---
 
+## C3 - Evolução para a entrega final
+
+- Nada foi removido do Checkpoint 01 nem do Checkpoint 02.
+- Acrescentado para completar o **CRUD de vendas**:
+    - **Atualização de venda** com `PUT /venda/{id}`: botão **Editar venda** na tela de detalhes, que abre a tela de cadastro em modo de edição (formulário já preenchido, título "Editar venda #id" e botão "Salvar alterações").
+    - Função `atualizarVenda()` em `services/vendaService.ts` e função `put()` em `services/api.ts`.
+    - O parâmetro `id` (opcional) foi acrescentado à rota `CadastroVenda` em `navigation/types.ts`.
+    - Após salvar, a lista é recarregada e mostra os dados novos.
+- O mesmo formulário e as mesmas validações servem para cadastrar e editar (sem duplicar código).
+
+### Requisitos do Checkpoint 03 e onde são atendidos
+
+| Requisito | Onde está no projeto |
+|---|---|
+| React Native e TypeScript | Todo o projeto (`.ts` e `.tsx`, com tipos em `models/Venda.ts` e `navigation/types.ts`) |
+| Estrutura organizada de arquivos | Pastas `screens`, `components`, `services`, `models`, `navigation`, `config` e `utils` |
+| Componentes e componentes reutilizáveis | `Botao`, `Opcao`, `Carregando`, `MensagemErro`, `ListaVazia`, `CardVenda`, usados em várias telas |
+| Propriedades (props) | Props tipadas em cada componente (ex.: `CardVenda`, `Botao`, `MensagemErro`) |
+| Estados | `useState` em todas as telas (dados, carregando, erro, escolhas do formulário) |
+| Eventos | `onPress`, `onChangeText`, `onRefresh` (arrastar para atualizar) |
+| Renderização condicional | Carregando, erro, lista vazia, confirmação de exclusão e modo cadastro/edição |
+| Renderização de listas | `FlatList` na lista de vendas e `map` nas telas de detalhes e cadastro |
+| Estilos organizados e Flexbox | `StyleSheet.create` em cada arquivo; `flexDirection`, `flex`, `gap`, `justifyContent` e `alignItems` |
+| Interface coerente, informações legíveis | Mesmos botões, bordas, tamanhos de fonte e cores de erro em todas as telas |
+| Feedback visual para as ações | Botões desabilitados e textos "Registrando...", "Salvando...", "Excluindo..."; confirmação antes de excluir; mensagens de erro em vermelho |
+| Mensagens ao usuário, lista vazia, carregamento | `MensagemErro`, `ListaVazia` e `Carregando` |
+| Navegação, parâmetros e retorno | Stack com três telas; `id` enviado ao detalhe e à edição; `atualizarEm` enviado de volta à lista; botão voltar do cabeçalho e `popTo` |
+| CRUD com WebAPI REST | `GET` (listar e detalhar), `POST` (cadastrar), `PUT` (editar) e `DELETE` (excluir) em `/venda` |
+| Falhas de conexão e API indisponível | `ErroApi` do tipo `comunicacao`, com tempo limite de 10 s e botão *Tentar novamente* |
+| Dados não encontrados | Resposta 404 da API aparece com a mensagem enviada (ex.: "Venda não encontrada") e a lista vazia tem texto próprio |
+| Erros de validação | Validações no formulário (cliente, vendedor, produtos e data) e mensagens da API (HTTP 400) |
+| Respostas HTTP de erro | `ErroApi` do tipo `servidor`, com a mensagem do JSON de erro da API |
+| Carregamento de informações | Indicador "Buscando..." nas três telas |
+
+---
+
 ## 2. Navegação
 
 ### Telas existentes
@@ -68,17 +104,17 @@ Tela única com:
 | Tela | Arquivo | Função |
 |---|---|---|
 | `ListaVendas` (título "Vendas") | `screens/ListaVendasScreen.tsx` | Lista as vendas obtidas da API, mostra os totais e permite excluir |
-| `DetalheVenda` (título "Detalhes da venda") | `screens/DetalheVendaScreen.tsx` | Mostra uma venda completa e permite excluí-la |
-| `CadastroVenda` (título "Nova venda") | `screens/CadastroVendaScreen.tsx` | Formulário para registrar uma venda |
+| `DetalheVenda` (título "Detalhes da venda") | `screens/DetalheVendaScreen.tsx` | Mostra uma venda completa e permite editá-la ou excluí-la |
+| `CadastroVenda` (título "Nova venda" ou "Editar venda") | `screens/CadastroVendaScreen.tsx` | Formulário para registrar uma venda ou alterar uma existente |
 
 ### Fluxo
 
 ```
-                 ┌── botão "Nova venda" ──────► CadastroVenda
-                 │                                  │
-ListaVendas ─────┤                                  │ venda registrada
-     ▲           │                                  │
-     │           └── botão "Detalhes" ──► DetalheVenda
+                 ┌── botão "Nova venda" ──────► CadastroVenda ◄── botão "Editar venda" ──┐
+                 │                                  │                                     │
+ListaVendas ─────┤                                  │ venda registrada ou salva           │
+     ▲           │                                  │                                     │
+     │           └── botão "Detalhes" ──► DetalheVenda ─────────────────────────────────┘
      │                                         │
      └────── voltar / venda excluída ──────────┘
 ```
@@ -91,7 +127,8 @@ A navegação é configurada em `App.tsx` com `@react-navigation/native` e `@rea
 |---|---|---|
 | `ListaVendas` → `DetalheVenda` | `id` da venda | `navigation.navigate('DetalheVenda', { id })` |
 | `ListaVendas` → `CadastroVenda` | nenhum | `navigation.navigate('CadastroVenda')` |
-| `CadastroVenda` → `ListaVendas` | `atualizarEm` (instante da alteração) | `navigation.popTo('ListaVendas', { atualizarEm: Date.now() })` |
+| `DetalheVenda` → `CadastroVenda` | `id` da venda (edição) | `navigation.navigate('CadastroVenda', { id: venda.id })` |
+| `CadastroVenda` → `ListaVendas` | `atualizarEm` (instante da alteração), após cadastrar ou salvar | `navigation.popTo('ListaVendas', { atualizarEm: Date.now() })` |
 | `DetalheVenda` → `ListaVendas` | `atualizarEm`, após excluir | `navigation.popTo('ListaVendas', { atualizarEm: Date.now() })` |
 
 A tela de detalhes lê o `id` com `route.params` e faz sua própria requisição `GET /venda/{id}`, então sempre mostra o dado atual do servidor. A lista observa o parâmetro `atualizarEm` em um `useEffect` e busca os dados de novo quando ele muda.
@@ -110,7 +147,7 @@ Repositório: https://github.com/ferpslva/sistema-vendas-api (API REST em Java c
 
 | Recurso | Entidade | Uso no aplicativo |
 |---|---|---|
-| `/venda` | Venda (com cliente, funcionário e produtos) | Listar, detalhar, cadastrar e excluir |
+| `/venda` | Venda (com cliente, funcionário e produtos) | CRUD completo: listar, detalhar, cadastrar, editar e excluir |
 | `/cliente` | Cliente | Listado na tela de cadastro (escolha do cliente) |
 | `/funcionario` | Funcionário | Listado na tela de cadastro (escolha do vendedor) |
 | `/produto` | Produto | Listado na tela de cadastro (escolha dos produtos) |
@@ -122,6 +159,7 @@ Repositório: https://github.com/ferpslva/sistema-vendas-api (API REST em Java c
 | `GET` | `/venda` | Lista todas as vendas | `listarVendas()` — `services/vendaService.ts` |
 | `GET` | `/venda/{id}` | Busca uma venda pelo id | `buscarVenda(id)` — `services/vendaService.ts` |
 | `POST` | `/venda?clienteId=&funcionarioId=&produtosIds=` | Registra uma venda | `cadastrarVenda()` — `services/vendaService.ts` |
+| `PUT` | `/venda/{id}?clienteId=&funcionarioId=&produtosIds=` | Atualiza uma venda | `atualizarVenda(id, dados)` — `services/vendaService.ts` |
 | `DELETE` | `/venda/{id}` | Exclui uma venda | `excluirVenda(id)` — `services/vendaService.ts` |
 | `GET` | `/cliente` | Lista clientes | `listarClientes()` — `services/opcoesVendaService.ts` |
 | `GET` | `/funcionario` | Lista funcionários | `listarFuncionarios()` — `services/opcoesVendaService.ts` |
@@ -195,10 +233,10 @@ const [carregando, setCarregando] = useState(true);         // aguardando respos
 const [erro, setErro] = useState<ErroTela | null>(null);    // falha ou erro do servidor
 ```
 
-A tela de cadastro guarda as listas recebidas (`clientes`, `funcionarios`, `produtos`), as escolhas do usuário (`clienteId`, `funcionarioId`, `produtosIds`, `data`) e o estado do envio (`enviando`, `erroFormulario`).
+A tela de cadastro guarda as listas recebidas (`clientes`, `funcionarios`, `produtos`), as escolhas do usuário (`clienteId`, `funcionarioId`, `produtosIds`, `data`) e o estado do envio (`enviando`, `erroFormulario`). Em modo de edição, a venda recebida da API preenche essas escolhas.
 
 ### Quando a requisição acontece
-Em um `useEffect` que dispara ao abrir a tela (e, na lista, quando `atualizarEm` muda). O mesmo carregamento é reutilizado pelo botão **Tentar novamente** e pelo gesto de arrastar para baixo, usando `async/await` com `try / catch / finally`. Cadastro e exclusão são disparados por ações do usuário e também usam `async/await`, com o botão desabilitado enquanto aguardam a resposta.
+Em um `useEffect` que dispara ao abrir a tela (e, na lista, quando `atualizarEm` muda). O mesmo carregamento é reutilizado pelo botão **Tentar novamente** e pelo gesto de arrastar para baixo, usando `async/await` com `try / catch / finally`. Cadastro, edição e exclusão são disparados por ações do usuário e também usam `async/await`, com o botão desabilitado enquanto aguardam a resposta.
 
 ### Cenários tratados
 
@@ -220,8 +258,8 @@ Em um `useEffect` que dispara ao abrir a tela (e, na lista, quando `atualizarEm`
 ├── models/Venda.ts                  # Tipos do JSON da API
 ├── navigation/types.ts              # Parâmetros das telas
 ├── services/
-│   ├── api.ts                       # get(), post(), del(), ErroApi, tempo limite
-│   ├── vendaService.ts              # listar, buscar, cadastrar e excluir vendas
+│   ├── api.ts                       # get(), post(), put(), del(), ErroApi, tempo limite
+│   ├── vendaService.ts              # listar, buscar, cadastrar, atualizar e excluir vendas
 │   └── opcoesVendaService.ts        # listar clientes, funcionários e produtos
 ├── screens/
 │   ├── ListaVendasScreen.tsx
@@ -238,10 +276,19 @@ Em um `useEffect` que dispara ao abrir a tela (e, na lista, quando `atualizarEm`
 
 ## Como executar
 
-### 1. Web API
-Requisitos: Java 17 ou superior (JDK, conforme o `pom.xml`) e MySQL.
+### 0. Banco de dados
+MySQL, com o banco `projeto`. Não há script de criação de tabelas: a API cria todas sozinha na primeira execução (`spring.jpa.hibernate.ddl-auto=update`). Só é preciso criar o banco vazio, no MySQL Workbench ou no terminal do MySQL:
 
-1. Crie o banco `projeto` no MySQL e confira usuário/senha em `src/main/resources/application.properties` da API.
+```sql
+CREATE DATABASE projeto;
+```
+
+Para começar do zero (apaga todos os dados): `DROP DATABASE projeto; CREATE DATABASE projeto;` e subir a API de novo. Usuário e senha ficam em `src/main/resources/application.properties` da API.
+
+### 1. Web API
+Requisitos: Java 17 ou superior (JDK, conforme o `pom.xml`) e o banco do passo anterior.
+
+1. Confira usuário e senha do MySQL em `src/main/resources/application.properties` da API.
 2. Na pasta da API: `./mvnw spring-boot:run` (no PowerShell: `.\mvnw.cmd spring-boot:run`). A API usa a porta 8080.
 3. Cadastre alguns dados de exemplo (nesta ordem):
 
@@ -256,7 +303,7 @@ curl -X POST http://localhost:8080/produto -H "Content-Type: application/json" \
   -d '{"nome":"Notebook","descricao":"Notebook Dell","preco":3500.00,"estoque":10}'
 ```
 
-Depois disso, as vendas já podem ser registradas pelo próprio aplicativo (tela *Nova venda*). Para criar uma venda direto pela API:
+Depois disso, as vendas já podem ser registradas, editadas e excluídas pelo próprio aplicativo. Para criar uma venda direto pela API:
 
 ```bash
 curl -X POST "http://localhost:8080/venda?clienteId=1&funcionarioId=1&produtosIds=1" \
@@ -325,8 +372,15 @@ UPDATE venda SET status = 'Concluída' WHERE id = 1;
 ---
 
 ## Dificuldades encontradas durante o desenvolvimento
-- Até o momento, sem dificuldades. Utilizei o modelo de exemplo das aulas.
-- 
+- **Manter o Checkpoint 1:** cada checkpoint precisava ser uma evolução do anterior. Foi necessário preservar o cadastro, a exclusão, o total concluído e os componentes `Cliente`, `StatusVenda` e `ContadorVendas`, e apenas acrescentar navegação, integração com a API e edição.
+- **Ambiente da API (Java):** o Maven Wrapper precisa ser chamado como `.\mvnw.cmd` no PowerShell, e foi necessário instalar um JDK (e não apenas o JRE) para compilar o projeto.
+- **Banco de dados:** a API não sobe sem o MySQL ligado (erro `Connection refused`). Além disso, o banco `projeto` era compartilhado com outro projeto, e as linhas da tabela `item_venda` impediam a exclusão de vendas (erro de chave estrangeira). O banco foi recriado para uso exclusivo deste projeto.
+- **CORS na versão web:** o navegador bloqueava as requisições à API. Foi criada a classe `CorsConfig` na API para liberar `http://localhost:*`.
+- **Cadastro e edição de venda (`POST` e `PUT /venda`):** a API valida o corpo da requisição e exige cliente, funcionário e produtos, além dos parâmetros de URL. Enviar só a data retornava erro 400.
+- **Status da venda:** a API não possui o campo `status`. O aplicativo considera "Aguardando Pagamento" quando o campo não vem, e o README descreve um ajuste opcional na API.
+- **Erros da API:** o servidor responde qualquer erro interno com HTTP 404 e uma mensagem em JSON. O aplicativo lê o campo `mensagem` e a exibe ao usuário, separando erro de servidor de falha de comunicação.
+- **Confirmação de exclusão na web:** `Alert.alert` não funciona na versão web do Expo, por isso a confirmação é exibida na própria tela.
+- **Dependências ao integrar o código:** foi necessário instalar as bibliotecas de navegação (`@react-navigation/native`, `@react-navigation/native-stack`, `react-native-screens` e `react-native-safe-area-context`) e conferir os `import` de cada arquivo com `npx tsc --noEmit`.
 
 ## Uso da Inteligência Artificial
 - Utilização do CLAUDE

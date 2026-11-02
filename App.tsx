@@ -26,7 +26,9 @@ export default function App() {
         <Stack.Screen
           name='CadastroVenda'
           component={CadastroVendaScreen}
-          options={{ title: 'Nova venda' }}
+          options={({ route }) => ({
+            title: route.params?.id !== undefined ? 'Editar venda' : 'Nova venda',
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>

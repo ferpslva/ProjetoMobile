@@ -9,14 +9,18 @@ import Opcao from '../components/Opcao';
 import { Cliente, Funcionario, Produto } from '../models/Venda';
 import { RootStackParamList } from '../navigation/types';
 import { listarClientes, listarFuncionarios, listarProdutos } from '../services/opcoesVendaService';
-import { cadastrarVenda } from '../services/vendaService';
-import { converterDataParaApi, descreverErro, formatarMoeda, hojeBR } from '../utils/formatadores';
+import { atualizarVenda, buscarVenda, cadastrarVenda } from '../services/vendaService';
+import { converterDataParaApi, descreverErro, formatarData, formatarMoeda, hojeBR } from '../utils/formatadores';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CadastroVenda'>;
 
 type ErroTela = { titulo: string, mensagem: string };
 
-export default function CadastroVendaScreen({ navigation }: Props) {
+export default function CadastroVendaScreen({ navigation, route }: Props) {
+
+  // Com 'id' a tela funciona como edição; sem ele, como cadastro
+  const idEdicao = route.params?.id;
+  const editando = idEdicao !== undefined;
 
   // Opções recebidas da API
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -40,21 +44,30 @@ export default function CadastroVendaScreen({ navigation }: Props) {
     setErroCarga(null);
 
     try {
-      const [listaClientes, listaFuncionarios, listaProdutos] = await Promise.all([
+      const [listaClientes, listaFuncionarios, listaProdutos, vendaAtual] = await Promise.all([
         listarClientes(),
         listarFuncionarios(),
         listarProdutos(),
+        idEdicao !== undefined ? buscarVenda(idEdicao) : Promise.resolve(null),
       ]);
 
       setClientes(listaClientes);
       setFuncionarios(listaFuncionarios);
       setProdutos(listaProdutos);
+
+      // Na edição, o formulário começa preenchido com os dados da venda
+      if (vendaAtual !== null) {
+        setClienteId(vendaAtual.cliente.id);
+        setFuncionarioId(vendaAtual.funcionario.id);
+        setProdutosIds(vendaAtual.produtos.map((produto) => produto.id));
+        setData(formatarData(vendaAtual.dataVenda));
+      }
     } catch (e) {
       setErroCarga(descreverErro(e));
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [idEdicao]);
 
   useEffect(() => {
     carregarOpcoes();
@@ -100,12 +113,18 @@ export default function CadastroVendaScreen({ navigation }: Props) {
     setEnviando(true);
 
     try {
-      await cadastrarVenda({
+      const dados = {
         dataVenda: dataApi,
         clienteId,
         funcionarioId,
         produtosIds,
-      });
+      };
+
+      if (idEdicao !== undefined) {
+        await atualizarVenda(idEdicao, dados);
+      } else {
+        await cadastrarVenda(dados);
+      }
 
       navigation.popTo('ListaVendas', { atualizarEm: Date.now() });
     } catch (e) {
@@ -134,7 +153,9 @@ export default function CadastroVendaScreen({ navigation }: Props) {
       contentContainerStyle={styles.conteudo}
       keyboardShouldPersistTaps='handled'
     >
-      <Text style={styles.titulo}>Nova venda</Text>
+      <Text style={styles.titulo}>
+        {editando ? `Editar venda #${idEdicao}` : 'Nova venda'}
+      </Text>
 
       <Text style={styles.secao}>Cliente</Text>
       {clientes.length === 0 ? (
@@ -214,7 +235,11 @@ export default function CadastroVendaScreen({ navigation }: Props) {
       )}
 
       <Botao
-        titulo={enviando ? 'Registrando...' : 'Registrar venda'}
+        titulo={
+          enviando
+            ? (editando ? 'Salvando...' : 'Registrando...')
+            : (editando ? 'Salvar alterações' : 'Registrar venda')
+        }
         onPress={registrar}
         desabilitado={enviando}
       />

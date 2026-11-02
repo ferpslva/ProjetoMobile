@@ -14,7 +14,7 @@ export class ErroApi extends Error {
     }
 }
 
-type Metodo = 'GET' | 'POST' | 'DELETE';
+type Metodo = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 async function requisitar<T>(metodo: Metodo, caminho: string, corpo?: unknown): Promise<T> {
     const controlador = new AbortController();
@@ -87,6 +87,10 @@ export function get<T>(caminho: string): Promise<T> {
 
 export function post<T>(caminho: string, corpo: unknown): Promise<T> {
     return requisitar<T>('POST', caminho, corpo);
+}
+
+export function put<T>(caminho: string, corpo: unknown): Promise<T> {
+    return requisitar<T>('PUT', caminho, corpo);
 }
 
 export function del(caminho: string): Promise<void> {

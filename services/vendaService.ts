@@ -1,5 +1,5 @@
 import { Venda } from '../models/Venda';
-import { del, ErroApi, get, post } from './api';
+import { del, ErroApi, get, post, put } from './api';
 
 export type NovaVenda = {
     dataVenda: string,
@@ -39,6 +39,20 @@ export async function cadastrarVenda(nova: NovaVenda): Promise<Venda> {
         cliente: { id: nova.clienteId },
         funcionario: { id: nova.funcionarioId },
         produtos: nova.produtosIds.map((id) => ({ id })),
+    });
+}
+
+export async function atualizarVenda(id: number, dados: NovaVenda): Promise<Venda> {
+    const consulta =
+        `clienteId=${dados.clienteId}` +
+        `&funcionarioId=${dados.funcionarioId}` +
+        `&produtosIds=${dados.produtosIds.join(',')}`;
+
+    return put<Venda>(`/venda/${id}?${consulta}`, {
+        dataVenda: dados.dataVenda,
+        cliente: { id: dados.clienteId },
+        funcionario: { id: dados.funcionarioId },
+        produtos: dados.produtosIds.map((produtoId) => ({ id: produtoId })),
     });
 }
 

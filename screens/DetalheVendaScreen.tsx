@@ -107,6 +107,11 @@ export default function DetalheVendaScreen({ route, navigation }: Props) {
         ))
       )}
 
+      <Botao
+        titulo='Editar venda'
+        onPress={() => navigation.navigate('CadastroVenda', { id: venda.id })}
+      />
+
       <View style={styles.zonaExclusao}>
         {erroExclusao !== '' && (
           <Text style={styles.erro}>{erroExclusao}</Text>
